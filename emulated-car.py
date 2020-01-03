@@ -1,4 +1,5 @@
 import socketio
+import sys
 
 sio = socketio.Client()
 
@@ -14,5 +15,10 @@ def command(data):
 def disconnect():
     print('disconnected from server')
 
-sio.connect('http://localhost:3000')
-sio.wait()
+
+if __name__ == '__main__':
+    try:
+        sio.connect(sys.argv[1] if len(sys.argv) > 1 else 'http://localhost:3000')
+        sio.wait()
+    except KeyboardInterrupt:
+        print('bye')

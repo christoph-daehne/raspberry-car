@@ -3,18 +3,19 @@
     <title>Socket.IO Controller</title>
   </head>
   <body>
-    <button onclick="onStartClick()">Start</button>
-    <button onclick="onStopClick()">Stop</button>
+    <button onmousedown="command('left')" onmouseup="stop()">Left</button>
+    <button onmousedown="command('foreward')" onmouseup="stop()">Foreward</button>
+    <button onmousedown="command('right')" onmouseup="stop()">Right</button>
     <script src="https://cdn.jsdelivr.net/npm/socket.io-client@2/dist/socket.io.js"></script>
     <script>
         var socket = io();
 
-        function onStartClick() {
-            socket.emit('command', 'start');
+        function command(cmd) {
+            socket.emit('command', cmd);
         }
 
-        function onStopClick() {
-            socket.emit('command', 'stop');
+        function stop() {
+            command('stop');
         }
     </script>
   </body>
