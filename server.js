@@ -8,8 +8,8 @@ app.get('/', (req, res) => {
 
 io.on('connection', socket => {
     console.log('something connected');
-    socket.on('command', cmd => console.log('command: ', cmd));
-    socket.on('disconnect', () => console.log('something disconnected'));
+    socket.on('command', cmd => io.emit('command', cmd));
+    socket.on('disconnect', () => io.emit('command', 'disconnected'));
 });
 
 http.listen(3000, () => {
