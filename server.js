@@ -8,7 +8,9 @@ app.get('/', (req, res) => {
 
 io.on('connection', socket => {
     console.log('something connected');
+    // broadcast commands
     socket.on('command', cmd => io.emit('command', cmd));
+    // stop on disconnect
     socket.on('disconnect', () => io.emit('command', 'stop'));
 });
 
