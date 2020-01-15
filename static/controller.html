@@ -1,0 +1,29 @@
+<html>
+  <head>
+    <title>Socket.IO Joystick</title>
+  </head>
+  <body style="background-color: #00AEEF;">
+    <div id="joystick"/>
+    <script src="https://cdn.jsdelivr.net/npm/socket.io-client@2/dist/socket.io.js"></script>
+    <script src="./nipplejs.js"></script>
+    <script>
+        var joystick = nipplejs.create({
+            zone: document.getElementById('joystick'),
+            mode: 'static',
+            position: {left: '50%', top: '50%'},
+            color: 'white',
+            size: Math.round(0.5 * Math.min(window.innerWidth, window.innerHeight))
+        });
+        var socket = io();
+
+        function command(cmd) {
+            socket.emit('command', cmd);
+        }
+        joystick.on('end', function() { command('stop'); });
+        joystick.on('dir:up', function() { command('foreward'); });
+        joystick.on('dir:left', function() { command('left'); });
+        joystick.on('dir:right', function() { command('right'); });
+
+    </script>
+  </body>
+</html>

@@ -9,6 +9,7 @@ nvm install
 npm install -g yarn
 yarn
 yarn start
+# download nipplejs.js into static/
 # open http://localhost:3000/
 ```
 

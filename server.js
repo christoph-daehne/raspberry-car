@@ -1,10 +1,13 @@
-const app = require('express')();
+const express = require('express');
+const app = express();
 const http = require('http').createServer(app);
 const io = require('socket.io')(http);
 
 app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/controller.html');
+  res.sendFile(__dirname + '/static/controller.html');
 });
+
+app.use('/', express.static('static'));
 
 io.on('connection', socket => {
     console.log('something connected');
