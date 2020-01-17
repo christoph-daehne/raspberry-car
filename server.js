@@ -12,9 +12,10 @@ app.use('/', express.static('static'));
 io.on('connection', socket => {
     console.log('something connected');
     // broadcast commands
-    socket.on('command', cmd => io.emit('command', cmd));
+    socket.on('command', cmd => socket.broadcast.binary(false).volatile.emit('command', cmd));
+    socket.on('video', frame => socket.broadcast.binary(true).volatile.emit('video', frame));
     // stop on disconnect
-    socket.on('disconnect', () => io.emit('command', 'stop'));
+    socket.on('disconnect', () => socket.broadcast.binary(false).volatile.emit('command', 'stop'));
 });
 
 http.listen(3000, () => {

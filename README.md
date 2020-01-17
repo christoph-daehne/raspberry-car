@@ -18,7 +18,9 @@ yarn start
 ```sh
 python3 -m venv env
 source env/bin/activate
-pip install "python-socketio[client]"
+pip install \
+    "python-socketio[client]" \
+    opencv-python
 python emulated-car.py
 deactivate
 ```
