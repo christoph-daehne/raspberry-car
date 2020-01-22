@@ -13,7 +13,7 @@ Socket.io client for the car.
 Connects to server and receives commands and events.
 """)
 
-class AtomicInteger():
+class AtomicInteger:
     """
         thread-safe interger
         thanks to https://stackoverflow.com/questions/23547604/python-counter-atomic-increment
@@ -33,59 +33,41 @@ class AtomicInteger():
             self._value = v
             return self._value
 
-class VideoStreamer:
+class Camera:
     """
-        Meant to be run by background worker
-        to send camera captures to clients.
+        camera to be enabled/disabled and auto-calibrated
     """
-    def __init__(self, sio):
-        self._sio = sio
-        self._camera = PiCamera()
-        self._width = 160
-        self._height = 128
-        self._camera.resolution = (self._width, self._height)
-        self._camera.framerate = 60
-        self._stopAtTime = AtomicInteger(0)
+    def __init__(self):
+        self._camera = None
+        self._width = 320
+        self._height = 256
+        # camera is attached to car upside down
         self._rotationMatrix = cv2.getRotationMatrix2D((self._width/2, self._height/2), 180, 1.0)
-        self._numberOfFrames = -1
-        self._streamStartTime = -1
 
-    @property
-    def stopAtTime(self):
-        return self._stopAtTime.value
+    def _enableUnlessEnabled(self):
+        if self._camera == None:
+            self._camera = PiCamera()
+            self._camera.resolution = (self._width, self._height)
+            self._camera.framerate = 60
+            # https://picamera.readthedocs.io/en/release-1.13/recipes1.html#capturing-consistent-images
+            # high ISO for lower shutter speed thus better images while moving
+            self._camera.iso = 1200
+            # Wait for the automatic gain control to settle
+            time.sleep(2)
+            # Now fix the values
+            self._camera.shutter_speed = self._camera.exposure_speed
+            self._camera.exposure_mode = 'off'
+            awb_gains = self._camera.awb_gains
+            self._camera.awb_mode = 'off'
+            self._camera.awb_gains = awb_gains
 
-    @stopAtTime.setter
-    def stopAtTime(self, seconds):
-        self._stopAtTime.value = seconds
+    def disable(self):
+        if self._camera != None:
+            self._camera.close()
+            self._camera = None
 
-    def stream(self):
-        # https://picamera.readthedocs.io/en/release-1.13/recipes1.html#capturing-consistent-images
-        # Set ISO to the desired value
-        self._camera.iso = 1200
-        # Wait for the automatic gain control to settle
-        time.sleep(2)
-        # Now fix the values
-        self._camera.shutter_speed = self._camera.exposure_speed
-        self._camera.exposure_mode = 'off'
-        g = self._camera.awb_gains
-        self._camera.awb_mode = 'off'
-        self._camera.awb_gains = g
-        while True:
-            if self._isStreaming():
-                if self._streamStartTime < 0:
-                    self._streamStartTime = time.time()
-                    self._numberOfFrames = 0
-                self._sendFrame()
-                self._numberOfFrames += 1
-            else:
-                if self._streamStartTime > 0:
-                    seconds = time.time() - self._streamStartTime
-                    fps = self._numberOfFrames / seconds
-                    self._streamStartTime = -1
-                    print('fps', fps)
-                time.sleep(1)
-
-    def _sendFrame(self):
+    def capture(self):
+        self._enableUnlessEnabled()
         # capture frame
         capture = PiRGBArray(self._camera, size=(self._width, self._height))
         self._camera.capture(capture, format="bgr")
@@ -97,10 +79,40 @@ class VideoStreamer:
         frameJpeg = cv2.imencode('.jpg', frameRotated, encode_param)
         # send to controller
         frameBytes = frameJpeg[1].tobytes()
-        self._sio.emit('video', frameBytes)
+        return frameBytes
 
-    def _isStreaming(self):
-        return self.stopAtTime > round(time.time())
+class VideoStreamer:
+    """
+        Meant to be run by background worker
+        to send camera captures to clients.
+    """
+    def __init__(self, sio):
+        self._sio = sio
+        self._camera = Camera()
+        self._stopAtTime = AtomicInteger(0)
+
+    @property
+    def stopAtTime(self):
+        return self._stopAtTime.value
+
+    @stopAtTime.setter
+    def stopAtTime(self, seconds):
+        self._stopAtTime.value = seconds
+
+    def stream(self):
+        maxFps = 5
+        minSendingTime = 1/maxFps
+        while True:
+            now = time.time()
+            if self.stopAtTime > round(time.time()):
+                self._sio.emit('video', self._camera.capture())
+                sendingTime = time.time() - now
+                delay = minSendingTime - sendingTime
+                if delay > 0:
+                    time.sleep(delay)
+            else:
+                self._camera.disable()
+                time.sleep(1)
 
 class Wheel:
     """
@@ -144,7 +156,6 @@ if __name__ == '__main__':
     LeftWheels = Wheel(8, 10, 12)
 
     def drive(speedLeft, speedRight):
-        print('driving', speedLeft, speedRight)
         LeftWheels.setSpeed(speedLeft)
         RightWheels.setSpeed(speedRight)
 
@@ -153,7 +164,6 @@ if __name__ == '__main__':
     try:
         @sio.event
         def connect():
-            print('connected to server')
             # a LED would be handy
             drive(0, 0)
 
@@ -178,7 +188,6 @@ if __name__ == '__main__':
 
         @sio.event
         def disconnect():
-            print('disconnected from server')
             # a LED would be handy
             drive(0, 0)
 

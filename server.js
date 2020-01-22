@@ -11,6 +11,8 @@ app.use('/', express.static('static'));
 
 io.on('connection', socket => {
     console.log('something connected');
+    // sent command to car to indicate that controller is ready (starts video stream)
+    socket.broadcast.binary(false).volatile.emit('command', 'stop')
     // broadcast commands
     socket.on('command', cmd => socket.broadcast.binary(false).volatile.emit('command', cmd));
     socket.on('video', frame => socket.broadcast.binary(true).volatile.emit('video', frame));
