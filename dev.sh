@@ -12,6 +12,8 @@ source ./dev_utilities.sh
 
 set -e
 
+NATS_TOPIC="de.sandstorm.raspberry.car.1"
+
 ######### TASKS #########
 
 # Downloads and installs all dependencies
@@ -20,12 +22,49 @@ function setup() {
   which python3 || ( _log_red "Please install python3" && exit 1 )
   which bw || brew install bitwarden-cli
   which nats || brew install nats-io/nats-tools/nats
+  which nats-server || brew install nats-server
   _log_green "Done"
 }
 
+# Start the entire local development stack
+function up_local_dev() {
+  setup
+  up_nats_server
+  sleep 1 # TODO: avoid timeout by checking for open port
+  up_operator
+  up_car_emulator
+}
+
+# Terminates the entire local development stack
+function down_local_dev() {
+  down_nats_server
+}
+
+# Starts a local Nats.io server unless already running
+function up_nats_server() {
+  mkdir -p tmp
+  nats publish "$NATS_TOPIC" "# ping" || nats-server \
+    --name raspberry-car-dev-server \
+    --pid ./tmp/nats-server.pid \
+    > ./tmp/nats-server.log &
+}
+
+# Terminates the local Nat.io server if running
+function down_nats_server() {
+  if [ -f "./tmp/nats-server.pid" ]; then
+    kill $(cat ./tmp/nats-server.pid) || true
+  fi
+}
+
+# Subscribes to the Raspberry Car message stream
+function log_nats_messages() {
+  nats subscribe "$NATS_TOPIC"
+}
+
 # Start the car emulator on the local machine.
-function up_emulator() {
-  _log_yellow "not yet implemented"
+function up_car_emulator() {
+  # TODO: also emulate video stream
+  log_nats_messages
 }
 
 # Start the operator client on the local machine.
