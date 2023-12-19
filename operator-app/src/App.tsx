@@ -1,45 +1,38 @@
 import { createSignal, onMount } from "solid-js";
-import { invoke } from "@tauri-apps/api/tauri";
 import "./App.css";
+import VideoScreen from "./Components/VideoScreen/VideoScreen";
+import Controls from "./Components/Controls/Controls";
+import { Direction } from "./Direction";
+import NatsClient from "./Nats/NatsClient";
+
 
 function App() {
-  const [greetMsg, setGreetMsg] = createSignal("");
-  const [name, setName] = createSignal("");
+  const natsClient = new NatsClient();
+  const [activeDirection, setActiveDirection] = createSignal(Direction.None);
 
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-    setGreetMsg(await invoke("greet", { name: name() }));
+  async function handleControlInput(direction: Direction) {
+    console.log({ direction });
+    setActiveDirection(direction);
+    await natsClient.setDirection(direction);
   }
 
-  let canvas!: HTMLCanvasElement;
-  onMount(() => {
-    const ctx = canvas.getContext("2d")!!;
-    ctx.fillStyle = "#0f0f0f";
-    ctx.font = '16px Avenir';
-    ctx.textBaseline = 'middle';
-    ctx.textAlign = "center";
-    ctx.fillText(
-      "The video feed starts automatically",
-      (canvas.width / 2), 50);
-    ctx.fillText(
-      "while driving.",
-      (canvas.width / 2), 68);
-  });
+  async function handleKeyDown(e: KeyboardEvent) {
+    console.log(e.key);
+    // TODO: does not work
+  }
+
+  async function handleKeyUp(e: KeyboardEvent) {
+    console.log(e.key);
+    // TODO: does not work
+  }
 
   return (
-    <div class="container">
+    <div class="container" onKeyDown={handleKeyDown} onKeyUp={handleKeyUp}>
       <h1>Raspberry Car 1</h1>
       <p>You can use W,A,S,D or the Arrow-Keys as well as the buttons</p>
-      <div class="row">
-        <button>Foreward</button>
-      </div>
+      <Controls activeDirection={activeDirection()} onChange={handleControlInput} />
       <div class="row my">
-        <button>Left</button>
-        <button class="mx">Back</button>
-        <button>Right</button>
-      </div>
-      <div class="row my">
-        <canvas id="video" ref={canvas}></canvas>
+        <VideoScreen />
       </div>
     </div>
   );

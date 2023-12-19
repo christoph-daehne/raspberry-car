@@ -1,0 +1,6 @@
+#video {
+    z-index: 999999;
+    width: 800;
+    height: 600;
+    border: 1px solid #396cd8;
+}

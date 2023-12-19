@@ -25,6 +25,8 @@ function setup() {
   which nats-server || brew install nats-server
   which cargo || brew install rust
   which fnm || brew install fnm
+  # for the rust auto-formatter in VSCode
+  which rustfmt || brew install rustfmt
   _log_green "Done"
 }
 
@@ -32,7 +34,6 @@ function setup() {
 function up_local_dev() {
   setup
   up_nats_server
-  sleep 1 # TODO: avoid timeout by checking for open port
   up_operator
   up_car_emulator
 }
@@ -49,6 +50,7 @@ function up_nats_server() {
     --name raspberry-car-dev-server \
     --pid ./tmp/nats-server.pid \
     > ./tmp/nats-server.log &
+  sleep 1 # TODO: avoid timeout by checking for open port
 }
 
 # Terminates the local Nat.io server if running
@@ -60,17 +62,19 @@ function down_nats_server() {
 
 # Subscribes to the Raspberry Car message stream
 function log_nats_messages() {
-  nats subscribe "$NATS_TOPIC"
+  nats subscribe "$NATS_TOPIC.>"
 }
 
 # Start the car emulator on the local machine.
 function up_car_emulator() {
+  up_nats_server
   # TODO: also emulate video stream
   log_nats_messages
 }
 
 # Start the operator client on the local machine.
 function up_operator_app() {
+  up_nats_server
   cd operator-app
   source <(fnm env)
   fnm install
