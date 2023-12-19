@@ -23,6 +23,8 @@ function setup() {
   which bw || brew install bitwarden-cli
   which nats || brew install nats-io/nats-tools/nats
   which nats-server || brew install nats-server
+  which cargo || brew install rust
+  which fnm || brew install fnm
   _log_green "Done"
 }
 
@@ -68,8 +70,14 @@ function up_car_emulator() {
 }
 
 # Start the operator client on the local machine.
-function up_operator() {
-  _log_yellow "not yet implemented"
+function up_operator_app() {
+  cd operator-app
+  source <(fnm env)
+  fnm install
+  fnm use
+  which yarn || npm install -g yarn
+  yarn
+  yarn tauri dev
 }
 
 # Updates and start the daemon on the car.
