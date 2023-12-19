@@ -1,5 +1,4 @@
-import { createSignal } from "solid-js";
-import logo from "./assets/logo.svg";
+import { createSignal, onMount } from "solid-js";
 import { invoke } from "@tauri-apps/api/tauri";
 import "./App.css";
 
@@ -12,40 +11,36 @@ function App() {
     setGreetMsg(await invoke("greet", { name: name() }));
   }
 
+  let canvas!: HTMLCanvasElement;
+  onMount(() => {
+    const ctx = canvas.getContext("2d")!!;
+    ctx.fillStyle = "#0f0f0f";
+    ctx.font = '16px Avenir';
+    ctx.textBaseline = 'middle';
+    ctx.textAlign = "center";
+    ctx.fillText(
+      "The video feed starts automatically",
+      (canvas.width / 2), 50);
+    ctx.fillText(
+      "while driving.",
+      (canvas.width / 2), 68);
+  });
+
   return (
     <div class="container">
-      <h1>Welcome to Tauri!</h1>
-
+      <h1>Raspberry Car 1</h1>
+      <p>You can use W,A,S,D or the Arrow-Keys as well as the buttons</p>
       <div class="row">
-        <a href="https://vitejs.dev" target="_blank">
-          <img src="/vite.svg" class="logo vite" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank">
-          <img src="/tauri.svg" class="logo tauri" alt="Tauri logo" />
-        </a>
-        <a href="https://solidjs.com" target="_blank">
-          <img src={logo} class="logo solid" alt="Solid logo" />
-        </a>
+        <button>Foreward</button>
       </div>
-
-      <p>Click on the Tauri, Vite, and Solid logos to learn more.</p>
-
-      <form
-        class="row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          greet();
-        }}
-      >
-        <input
-          id="greet-input"
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="Enter a name..."
-        />
-        <button type="submit">Greet</button>
-      </form>
-
-      <p>{greetMsg()}</p>
+      <div class="row my">
+        <button>Left</button>
+        <button class="mx">Back</button>
+        <button>Right</button>
+      </div>
+      <div class="row my">
+        <canvas id="video" ref={canvas}></canvas>
+      </div>
     </div>
   );
 }

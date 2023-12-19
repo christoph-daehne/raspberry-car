@@ -1,7 +1,6 @@
-.logo.vite:hover {
-  filter: drop-shadow(0 0 2em #747bff);
-}
-
-.logo.solid:hover {
-  filter: drop-shadow(0 0 2em #2f5d90);
+#video {
+    z-index: 999999;
+    width: 800;
+    height: 600;
+    border: 1px solid #396cd8;
 }
