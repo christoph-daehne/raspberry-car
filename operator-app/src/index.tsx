@@ -3,7 +3,7 @@ import { render } from "solid-js/web";
 
 import "./styles.css";
 import App from "./App";
-import { console_log } from "./tauriCommands";
+import { console_log } from "./tauriApi";
 
 const original_console_log = console.log;
 console.log = async (...data: any[]) => {

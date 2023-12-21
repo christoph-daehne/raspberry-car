@@ -2458,6 +2458,7 @@ dependencies = [
 name = "raspberry-car-operator-app"
 version = "0.0.0"
 dependencies = [
+ "crossbeam-channel",
  "nats",
  "serde",
  "serde_json",

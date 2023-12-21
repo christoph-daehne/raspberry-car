@@ -12,7 +12,7 @@ source ./dev_utilities.sh
 
 set -e
 
-NATS_TOPIC="de.sandstorm.raspberry.car.1"
+NATS_TOPIC_PREFIX="de.sandstorm.raspberry.car.1"
 
 ######### TASKS #########
 
@@ -46,7 +46,7 @@ function down_local_dev() {
 # Starts a local Nats.io server unless already running
 function up_nats_server() {
   mkdir -p tmp
-  nats publish "$NATS_TOPIC" "# ping" || nats-server \
+  nats publish "$NATS_TOPIC_PREFIX" "# ping" || nats-server \
     --name raspberry-car-dev-server \
     --pid ./tmp/nats-server.pid \
     > ./tmp/nats-server.log &
@@ -62,7 +62,7 @@ function down_nats_server() {
 
 # Subscribes to the Raspberry Car message stream
 function log_nats_messages() {
-  nats subscribe "$NATS_TOPIC.>"
+  nats subscribe "$NATS_TOPIC_PREFIX.>"
 }
 
 # Start the car emulator on the local machine.
@@ -82,6 +82,26 @@ function up_operator_app() {
   which yarn || npm install -g yarn
   yarn
   yarn tauri dev
+}
+
+# Publishes commands as if another operator would be using the same car
+function fake_second_operator() {
+  up_nats_server
+  nats publish "$NATS_TOPIC_PREFIX.commands" "Left"
+  sleep 0.8
+  nats publish "$NATS_TOPIC_PREFIX.commands" "Right"
+  sleep 0.8
+  nats publish "$NATS_TOPIC_PREFIX.commands" "None"
+  sleep 0.8
+  nats publish "$NATS_TOPIC_PREFIX.commands" "Foreward"
+  sleep 0.8
+  nats publish "$NATS_TOPIC_PREFIX.commands" "Back"
+  sleep 0.8
+  nats publish "$NATS_TOPIC_PREFIX.commands" "Left"
+  sleep 0.8
+  nats publish "$NATS_TOPIC_PREFIX.commands" "Left"
+  sleep 0.8
+  nats publish "$NATS_TOPIC_PREFIX.commands" "None"
 }
 
 # Updates and start the daemon on the car.

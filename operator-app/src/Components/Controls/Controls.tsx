@@ -1,10 +1,11 @@
+import { Accessor } from "solid-js";
 import { Direction } from "../../Direction";
 
 function Controls({
   activeDirection,
   onChange,
 }: {
-  activeDirection: Direction,
+  activeDirection: Accessor<Direction>,
   onChange: (direction: Direction) => void
 }) {
   return (
@@ -13,7 +14,7 @@ function Controls({
         <button
           onMouseUp={() => onChange(Direction.None)}
           onMouseDown={() => onChange(Direction.Foreward)}
-          classList={{ active: activeDirection === Direction.Foreward }}
+          classList={{ active: activeDirection() === Direction.Foreward }}
         >
           Foreward
         </button>
@@ -22,21 +23,21 @@ function Controls({
         <button
           onMouseUp={() => onChange(Direction.None)}
           onMouseDown={() => onChange(Direction.Left)}
-          classList={{ active: activeDirection === Direction.Left }}
+          classList={{ active: activeDirection() === Direction.Left }}
         >
           Left
         </button>
         <button
           onMouseUp={() => onChange(Direction.None)}
           onMouseDown={() => onChange(Direction.Back)}
-          classList={{ active: activeDirection === Direction.Back, mx: true }}
+          classList={{ active: activeDirection() === Direction.Back, mx: true }}
         >
           Back
         </button>
         <button
           onMouseUp={() => onChange(Direction.None)}
           onMouseDown={() => onChange(Direction.Right)}
-          classList={{ active: activeDirection === Direction.Right }}
+          classList={{ active: activeDirection() === Direction.Right }}
         >
           Right</button>
       </div>

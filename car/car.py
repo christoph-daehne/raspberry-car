@@ -169,18 +169,18 @@ if __name__ == '__main__':
 
         @sio.event
         def command(data):
-            isStopped = data == 'stop'
+            isStopped = data == 'None'
             # stop video stream after 10 s (unless car is moving)
             videoStreamer.stopAtTime = round(time.time()) + (10 if isStopped else 99999999) 
-            if data == 'left':
+            if data == 'Left':
                 drive(-1, 1)
-            elif data == 'right':
+            elif data == 'Right':
                 drive(1, -1)
-            elif data == 'foreward':
+            elif data == 'Foreward':
                 drive(3, 3)
-            elif data == 'backward':
+            elif data == 'Back':
                 drive(-3, -3)
-            elif data == 'stop':
+            elif data == 'None':
                 drive(0, 0)
             else:
                 print("unknown command '%s'" % data)
