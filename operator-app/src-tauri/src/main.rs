@@ -10,6 +10,10 @@ const NATS_SERVER: &str = "localhost";
 struct NatsMessage {
     message: String,
 }
+#[derive(Clone, serde::Serialize)]
+struct NatsBytes {
+    payload: Vec<u8>,
+}
 
 #[tauri::command]
 fn console_log(message: &str) {
@@ -52,9 +56,9 @@ fn event_to_string(payload: Option<&str>) -> Option<&str> {
         Some(json) => match serde_json::from_str(json) {
             Ok(v) => v,
             Err(_error) => None,
-        }
-        None => None
-    }
+        },
+        None => None,
+    };
 }
 
 fn main() {
@@ -62,15 +66,15 @@ fn main() {
         .invoke_handler(tauri::generate_handler![console_log])
         .setup(move |app| {
             let nc = nats_connect();
-            app.listen_global("nats_publish__commands", move |event| {
-                match event_to_string(event.payload()) {
+            app.listen_global(
+                "nats_publish__commands",
+                move |event| match event_to_string(event.payload()) {
                     Some(payload) => {
-                        println!("{:?}", payload);
                         nats_publish(&nc, "de.sandstorm.raspberry.car.1.commands", payload);
                     }
                     None => (),
-                }
-            });
+                },
+            );
 
             let handle = app.handle();
 
@@ -91,6 +95,11 @@ fn main() {
                         }
                         if msg.subject.ends_with(".logs") {
                             println!("car: {}", nats_message_to_string(&msg));
+                        }
+                        if msg.subject.ends_with(".images") {
+                            handle
+                                .emit_all("nats_subscribe__images", NatsBytes { payload: msg.data })
+                                .unwrap();
                         }
                     }
                 }

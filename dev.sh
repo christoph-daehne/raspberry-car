@@ -65,11 +65,16 @@ function log_nats_messages() {
   nats subscribe "$NATS_TOPIC_PREFIX.>"
 }
 
-# Start the car emulator on the local machine.
-function up_car_emulator() {
+# Start the car emulator on the local machine and sends dummy video images.
+# Also see log_nats_messages.
+function fake_video_stream() {
   up_nats_server
-  # TODO: also emulate video stream
-  log_nats_messages
+  while (true); do
+    cat test-image-1.jpg | nats publish "$NATS_TOPIC_PREFIX.images"
+    sleep 2
+    cat test-image-2.jpg | nats publish "$NATS_TOPIC_PREFIX.images"
+    sleep 2
+  done;
 }
 
 # Start the operator client on the local machine.
@@ -84,24 +89,27 @@ function up_operator_app() {
   yarn tauri dev
 }
 
-# Publishes commands as if another operator would be using the same car
+# Publishes commands as if another operator would be using the same car.
 function fake_second_operator() {
   up_nats_server
-  nats publish "$NATS_TOPIC_PREFIX.commands" "Left"
-  sleep 0.8
-  nats publish "$NATS_TOPIC_PREFIX.commands" "Right"
-  sleep 0.8
-  nats publish "$NATS_TOPIC_PREFIX.commands" "None"
-  sleep 0.8
-  nats publish "$NATS_TOPIC_PREFIX.commands" "Foreward"
-  sleep 0.8
-  nats publish "$NATS_TOPIC_PREFIX.commands" "Back"
-  sleep 0.8
-  nats publish "$NATS_TOPIC_PREFIX.commands" "Left"
-  sleep 0.8
-  nats publish "$NATS_TOPIC_PREFIX.commands" "Left"
-  sleep 0.8
-  nats publish "$NATS_TOPIC_PREFIX.commands" "None"
+  while (true); do
+    nats publish "$NATS_TOPIC_PREFIX.commands" "Left"
+    sleep 0.8
+    nats publish "$NATS_TOPIC_PREFIX.commands" "Right"
+    sleep 0.8
+    nats publish "$NATS_TOPIC_PREFIX.commands" "None"
+    sleep 0.8
+    nats publish "$NATS_TOPIC_PREFIX.commands" "Foreward"
+    sleep 0.8
+    nats publish "$NATS_TOPIC_PREFIX.commands" "Back"
+    sleep 0.8
+    nats publish "$NATS_TOPIC_PREFIX.commands" "Left"
+    sleep 0.8
+    nats publish "$NATS_TOPIC_PREFIX.commands" "Left"
+    sleep 0.8
+    nats publish "$NATS_TOPIC_PREFIX.commands" "None"
+    sleep 0.8
+  done;
 }
 
 # Updates and start the daemon on the car.

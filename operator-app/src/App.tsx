@@ -5,7 +5,7 @@ import Controls from "./Components/Controls/Controls";
 import { Direction } from "./Direction";
 import NatsClient from "./Nats/NatsClient";
 import { UnlistenFn } from "@tauri-apps/api/event";
-import { nats_subscribe } from "./tauriApi";
+import { nats_subscribe__commands } from "./tauriApi";
 
 function App() {
   const natsClient = new NatsClient();
@@ -13,10 +13,8 @@ function App() {
 
   let unsubscribe: UnlistenFn;
   onMount(async () => {
-    unsubscribe = await nats_subscribe(
-      "commands",
+    unsubscribe = await nats_subscribe__commands(
       (message: string) => {
-        console.log('received direction', message);
         const direction = Direction[message as keyof typeof Direction]
         setActiveDirection(direction)
       }
@@ -28,7 +26,6 @@ function App() {
   })
 
   async function handleControlInput(direction: Direction) {
-    console.log('sending direction', direction);
     setActiveDirection(direction);
     await natsClient.setDirection(direction);
   }

@@ -14,13 +14,22 @@ export async function console_log(...data: any[]) {
     await invoke("console_log", { message });
 }
 
-type SubscribeableTopics = "commands";
 type NatsMessage = {
     message: string
 }
-export async function nats_subscribe(topic: SubscribeableTopics, callback: (message: string) => void) {
+export async function nats_subscribe__commands(callback: (message: string) => void) {
     return await listen<NatsMessage>(
-        `nats_subscribe__${topic}`,
+        `nats_subscribe__commands`,
         (event) => callback(event.payload.message)
+    );
+}
+
+type NatsBytes = {
+    payload: Uint8Array
+}
+export async function nats_subscribe__images(callback: (payload: Uint8Array) => void) {
+    return await listen<NatsBytes>(
+        `nats_subscribe__images`,
+        (event) => callback(event.payload.payload)
     );
 }
