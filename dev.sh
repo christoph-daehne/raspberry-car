@@ -31,15 +31,13 @@ function setup() {
 }
 
 # Start the entire local development stack
-function up_local_dev() {
+function up() {
   setup
-  up_nats_server
-  up_operator
   up_car_emulator
 }
 
 # Terminates the entire local development stack
-function down_local_dev() {
+function down() {
   down_nats_server
 }
 
@@ -65,18 +63,6 @@ function log_nats_messages() {
   nats subscribe "$NATS_TOPIC_PREFIX.>"
 }
 
-# Start the car emulator on the local machine and sends dummy video images.
-# Also see log_nats_messages.
-function fake_video_stream() {
-  up_nats_server
-  while (true); do
-    cat test-image-1.jpg | nats publish "$NATS_TOPIC_PREFIX.images"
-    sleep 2
-    cat test-image-2.jpg | nats publish "$NATS_TOPIC_PREFIX.images"
-    sleep 2
-  done;
-}
-
 # Start the operator client on the local machine.
 function up_operator_app() {
   up_nats_server
@@ -86,7 +72,23 @@ function up_operator_app() {
   fnm use
   which yarn || npm install -g yarn
   yarn
+  _log_green "#######################################################"
+  _log_green "# You might want to run 'dev up_car_emulator' as well #"
+  _log_green "#######################################################"
   yarn tauri dev
+}
+
+# Starts the car service on the local machine without GPIO pins and camera
+function up_car_emulator() {
+  up_nats_server
+  cd car
+  _log_yellow "Setting up python project"
+  ls venv || python3 -m venv venv
+  source venv/bin/activate
+  pip3 install --requirement requirements_emulator.txt
+
+  _log_yellow "Starting emulator"
+  CONTEXT=EMULATOR python3 main.py
 }
 
 # Publishes commands as if another operator would be using the same car.

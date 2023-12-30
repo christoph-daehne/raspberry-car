@@ -40,7 +40,10 @@ You can work with the actual car or an emulated one.
 * _pre-natsio_ contains the code version prior to this re-write.
 
 ```shell
-dev up_local_dev
+dev up_operator_app
+dev up_car_emulator
+…
+dev down
 
 # more commands
 dev help
