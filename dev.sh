@@ -12,8 +12,6 @@ source ./dev_utilities.sh
 
 set -e
 
-NATS_TOPIC_PREFIX="de.sandstorm.raspberry.car.1"
-
 ######### TASKS #########
 
 # Downloads and installs all dependencies
@@ -21,12 +19,38 @@ function setup() {
   _log_green "Installing required tools"
   which python3 || ( _log_red "Please install python3" && exit 1 )
   which bw || brew install bitwarden-cli
+  which jq || brew install jq
+  which ack || brew install ack
   which nats || brew install nats-io/nats-tools/nats
   which nats-server || brew install nats-server
   which cargo || brew install rust
   which fnm || brew install fnm
   # for the rust auto-formatter in VSCode
   which rustfmt || brew install rustfmt
+  _log_green "Done"
+}
+
+# Activates the configuration for a purely local development (default)
+function profile_local_activate() {
+  _profile_activate local
+}
+
+# Activates the configuration using the prod Nats server for communication
+function profile_sandstorm_nats_activate() {
+  _profile_activate sandstorm-nats
+}
+
+# Activates the production configuration using the real car with ID=1
+function profile_prod_activate() {
+  _profile_activate prod
+}
+
+function _profile_activate() {
+  local profile=$1
+  _log_yellow "Setting profile to '$profile'"
+  cat "profile.$profile.sh" > profile.active.sh
+  echo >> profile.active.sh
+  fnm env >> profile.active.sh
   _log_green "Done"
 }
 
@@ -43,12 +67,14 @@ function down() {
 
 # Starts a local Nats.io server unless already running
 function up_nats_server() {
-  mkdir -p tmp
-  nats publish "$NATS_TOPIC_PREFIX" "# ping" || nats-server \
-    --name raspberry-car-dev-server \
-    --pid ./tmp/nats-server.pid \
-    > ./tmp/nats-server.log &
-  sleep 1 # TODO: avoid timeout by checking for open port
+  if echo $NATS_URL | ack localhost; then
+    mkdir -p tmp
+    nats publish "$NATS_TOPIC" "# ping" || nats-server \
+      --name raspberry-car-dev-server \
+      --pid ./tmp/nats-server.pid \
+      > ./tmp/nats-server.log &
+    sleep 1 # TODO: avoid timeout by checking for open port
+  fi
 }
 
 # Terminates the local Nat.io server if running
@@ -60,14 +86,14 @@ function down_nats_server() {
 
 # Subscribes to the Raspberry Car message stream
 function log_nats_messages() {
-  nats subscribe "$NATS_TOPIC_PREFIX.>"
+  nats subscribe "$NATS_TOPIC.>"
 }
 
 # Start the operator client on the local machine.
 function up_operator_app() {
   up_nats_server
   cd operator-app
-  source <(fnm env)
+  # this only work in the terminal, not in this script source <(fnm env)
   fnm install
   fnm use
   which yarn || npm install -g yarn
@@ -95,21 +121,21 @@ function up_car_emulator() {
 function fake_second_operator() {
   up_nats_server
   while (true); do
-    nats publish "$NATS_TOPIC_PREFIX.commands" "Left"
+    nats publish "$NATS_TOPIC.commands" "Left"
     sleep 0.8
-    nats publish "$NATS_TOPIC_PREFIX.commands" "Right"
+    nats publish "$NATS_TOPIC.commands" "Right"
     sleep 0.8
-    nats publish "$NATS_TOPIC_PREFIX.commands" "None"
+    nats publish "$NATS_TOPIC.commands" "None"
     sleep 0.8
-    nats publish "$NATS_TOPIC_PREFIX.commands" "Foreward"
+    nats publish "$NATS_TOPIC.commands" "Foreward"
     sleep 0.8
-    nats publish "$NATS_TOPIC_PREFIX.commands" "Back"
+    nats publish "$NATS_TOPIC.commands" "Back"
     sleep 0.8
-    nats publish "$NATS_TOPIC_PREFIX.commands" "Left"
+    nats publish "$NATS_TOPIC.commands" "Left"
     sleep 0.8
-    nats publish "$NATS_TOPIC_PREFIX.commands" "Left"
+    nats publish "$NATS_TOPIC.commands" "Left"
     sleep 0.8
-    nats publish "$NATS_TOPIC_PREFIX.commands" "None"
+    nats publish "$NATS_TOPIC.commands" "None"
     sleep 0.8
   done;
 }
@@ -130,6 +156,12 @@ function shutdown_car() {
 }
 
 _log_green "---------------------------- RUNNING TASK: $1 ----------------------------"
+
+if [ ! -f "./profile.active.sh" ]; then
+  _log_green "activating default profile"
+  profile_local_activate
+fi
+source ./profile.active.sh
 
 # THIS NEEDS TO BE LAST!!!
 # this will run your tasks

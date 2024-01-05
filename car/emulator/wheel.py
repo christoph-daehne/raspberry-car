@@ -8,7 +8,7 @@ def create_wheels():
     ]
 
 def close_wheels():
-    pass
+    print("Stopping car and closing GPIO")
 
 class Wheel:
     """

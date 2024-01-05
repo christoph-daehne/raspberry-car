@@ -1,10 +1,9 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use std::env;
 use std::thread;
 use tauri::Manager;
-
-const NATS_SERVER: &str = "localhost";
 
 #[derive(Clone, serde::Serialize)]
 struct NatsMessage {
@@ -21,26 +20,28 @@ fn console_log(message: &str) {
 }
 
 fn nats_connect() -> nats::Connection {
-    return match nats::connect(NATS_SERVER) {
-        Ok(nc) => nc,
-        Err(error) => panic!("Failed to connect to nats: {:?}", error),
-    };
+    let nats_url = env::var("NATS_URL").unwrap_or("nats://localhost:4222".to_string());
+    let creds_file = env::var("NATS_CREDS").unwrap_or("".to_string());
+    if creds_file != "" {
+        nats::Options::with_credentials(creds_file)
+            .connect(nats_url)
+            .expect("failed to connect to Nats")
+    } else {
+        nats::connect(nats_url).expect("failed to connect to Nats")
+    }
 }
 
 fn nats_subscribe(nc: &nats::Connection, topic: &str) -> nats::Subscription {
     println!("Subscribing to {}", topic);
     // see https://docs.rs/nats/0.24.1/nats/struct.Subscription.html
-    return match nc.subscribe(topic) {
-        Ok(sub) => sub,
-        Err(error) => panic!("Failed to subscribe to {:?}", error),
-    };
+    nc.subscribe(topic)
+        .expect("Failed to subscribe to nats topic")
 }
 
 fn nats_message_to_string(msg: &nats::Message) -> String {
-    return match std::str::from_utf8(&msg.data) {
-        Ok(v) => v.to_owned(),
-        Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
-    };
+    std::str::from_utf8(&msg.data)
+        .expect("Invalid UTF-8 sequence")
+        .to_string()
 }
 
 fn nats_publish(nc: &nats::Connection, topic: &str, message: &str) {
@@ -62,6 +63,10 @@ fn event_to_string(payload: Option<&str>) -> Option<&str> {
 }
 
 fn main() {
+    let nats_topic = env::var("NATS_TOPIC")
+        .expect("expecting unset NATS_TOPIC, eg 'de.sandstorm.raspberry.car.1'");
+    let commands_topic = nats_topic.clone() + ".commands";
+    let all_topics = nats_topic + ".>";
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![console_log])
         .setup(move |app| {
@@ -70,7 +75,7 @@ fn main() {
                 "nats_publish__commands",
                 move |event| match event_to_string(event.payload()) {
                     Some(payload) => {
-                        nats_publish(&nc, "de.sandstorm.raspberry.car.1.commands", payload);
+                        nats_publish(&nc, &commands_topic, payload);
                     }
                     None => (),
                 },
@@ -81,7 +86,7 @@ fn main() {
             // background worker to read nats events
             thread::spawn(move || {
                 let nc = nats_connect();
-                let sub = nats_subscribe(&nc, "de.sandstorm.raspberry.car.1.>");
+                let sub = nats_subscribe(&nc, &all_topics);
                 loop {
                     if let Ok(msg) = sub.next_timeout(std::time::Duration::from_secs(300)) {
                         if msg.subject.ends_with(".commands") {

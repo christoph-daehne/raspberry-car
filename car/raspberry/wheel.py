@@ -4,12 +4,12 @@ def create_wheels():
     GPIO.setmode(GPIO.BOARD)
     Left = Wheel(8, 10, 12)
     Right = Wheel(3, 5, 7)
-    return [
-        Left,
-        Right
-    ]
+    return [Left, Right]
 
 def close_wheels():
+    [LeftWheels, RightWheels] = create_wheels()
+    LeftWheels.setSpeed(0)
+    RightWheels.setSpeed(0)
     GPIO.cleanup()
 
 class Wheel:

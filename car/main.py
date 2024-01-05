@@ -40,12 +40,12 @@ class VideoStreamer:
                 self._camera.disable()
                 await asyncio.sleep(1)
 
-async def mainVideoStream(nc, videoStreamer: VideoStreamer):
+async def mainVideoStream(nc, topic: str, videoStreamer: VideoStreamer):
     async def sendFrame(bytes):
-        await nc.publish("de.sandstorm.raspberry.car.1.images", bytes)
+        await nc.publish(topic, bytes)
     await videoStreamer.stream(sendFrame)
 
-async def mainProcessCommands(nc, videoStreamer: VideoStreamer):
+async def mainProcessCommands(nc, topic: str, videoStreamer: VideoStreamer):
     [LeftWheels, RightWheels] = create_wheels()
     async def setSpeed(speedLeft: int, speedRight: int):
         # stop video stream after 10 s (unless car is moving)
@@ -71,7 +71,7 @@ async def mainProcessCommands(nc, videoStreamer: VideoStreamer):
             speedLeft = 1
             speedRight = -1
         await setSpeed(speedLeft, speedRight)
-    commands = await nc.subscribe("de.sandstorm.raspberry.car.1.commands")
+    commands = await nc.subscribe(topic)
     lastCommand = round(time.time())
     while True:
         async for message in commands.messages:
@@ -84,12 +84,19 @@ async def mainProcessCommands(nc, videoStreamer: VideoStreamer):
         await asyncio.sleep(1)
 
 async def main():
-    nc = await nats.connect("nats://localhost:4222")
+    natsUrl = os.environ.get("NATS_URL", "nats://localhost:4222")
+    natsTopic = os.environ.get("NATS_TOPIC", "")
+    assert natsTopic != "", "expecting unset NATS_TOPIC, eg 'de.sandstorm.raspberry.car.1'"
+    natsCreds = os.environ.get("NATS_CREDS")
+    nc = await nats.connect(natsUrl, user_credentials=natsCreds)
     videoStreamer = VideoStreamer()
     await asyncio.gather(
-        mainVideoStream(nc, videoStreamer),
-        mainProcessCommands(nc, videoStreamer)
+        mainVideoStream(nc, natsTopic + ".images", videoStreamer),
+        mainProcessCommands(nc, natsTopic + ".commands", videoStreamer)
     )
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        close_wheels()
