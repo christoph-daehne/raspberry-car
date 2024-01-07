@@ -43,7 +43,6 @@ You can work with the actual car or an emulated one.
 
 * Code for the operator of the car resides in _operator-app_.
 * Code for the car in _car_.
-* _pre-natsio_ contains the code version prior to this re-write.
 
 ```shell
 # local start
