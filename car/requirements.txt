@@ -1,2 +1,2 @@
 nats-py==v2.6.0
-nkeys
+nkeys==0.1.0

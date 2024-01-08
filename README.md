@@ -7,21 +7,26 @@ This rewrite uses Nats.io for communication between car and operator since
 
 ## Tech Stack
 
-* [Nats.io](https://nats.io/)
-* [Python on Raspberry PI](https://projects.raspberrypi.org/en/collections/python)
+* [Nats.io](https://nats.io/) for communication between car and client
+* [Python](https://projects.raspberrypi.org/en/collections/python) on the car
     * [Python picamera](https://picamera.readthedocs.io/en/release-1.13/)
     * [Python Asyncio](https://realpython.com/async-io-python/)
-* [balenaCloud](https://docs.balena.io/learn/getting-started/raspberrypi3/python/)
+* [balenaCloud](https://docs.balena.io/learn/getting-started/raspberrypi3/python/) for deployment to the car
     * [Raspberry-Car fleet](https://dashboard.balena-cloud.com/fleets/2104400)
+    * [Device Setup](https://docs.balena.io/learn/getting-started/raspberrypi3/python/)
+    * [Environment config](https://docs.balena.io/learn/manage/variables/)
+    * [Balena CLI](https://docs.balena.io/reference/balena-cli/)
+    * [Bundling](https://docs.balena.io/learn/develop/dockerfile/)
     * [WiFi Setup](https://docs.balena.io/reference/OS/network/#wifi-setup)
-* [Dev-Script-Runner](https://github.com/sandstorm/dev-script-runner)
+    * [balena-engine](https://engine-docs.balena.io/getting-started)
+* [Dev-Script-Runner](https://github.com/sandstorm/dev-script-runner) for custom dev-tools
     * [Bitwarden CLI](https://bitwarden.com/help/cli/)
     * [jq](https://jqlang.github.io/jq/)
     * [ack](https://beyondgrep.com/)
-* [Tauri](https://tauri.app/)
+* [Tauri](https://tauri.app/) for the client desktop app
     * [Rust](https://www.rust-lang.org/) (for Tauri)
-    * [SolidJS](https://www.solidjs.com/)
     * [Typescript](https://www.typescriptlang.org/)
+    * [SolidJS](https://www.solidjs.com/)
     * [Yarn](https://yarnpkg.com/)
     * [Vite](https://vitejs.dev/)
     * [fnm](https://github.com/Schniz/fnm)

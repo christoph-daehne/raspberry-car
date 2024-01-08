@@ -12,6 +12,9 @@ source ./dev_utilities.sh
 
 set -e
 
+BALENA_FLEET="balena_cloud15/raspberry-car"
+BALENA_DEVICE_CAR_1="46231ba"
+
 ######### TASKS #########
 
 # Downloads and installs all dependencies
@@ -25,6 +28,7 @@ function setup() {
   which nats-server || brew install nats-server
   which cargo || brew install rust
   which fnm || brew install fnm
+  which gum || brew install gum
   # for the rust auto-formatter in VSCode
   which rustfmt || brew install rustfmt
   _log_green "Done"
@@ -111,7 +115,7 @@ function up_car_emulator() {
   _log_yellow "Setting up python project"
   ls venv || python3 -m venv venv
   source venv/bin/activate
-  pip3 install --requirement requirements_emulator.txt
+  pip3 install --requirement requirements.txt
 
   _log_yellow "Starting emulator"
   CONTEXT=EMULATOR python3 main.py
@@ -140,19 +144,137 @@ function fake_second_operator() {
   done;
 }
 
-# Updates and start the daemon on the car.
-function up_car() {
-  _log_yellow "not yet implemented"
+# (Re)sets all environment variables in the balena fleet/device config
+function balena_set_environment() {
+  _log_yellow "Loading prodution settings"
+  source ./profile.prod.sh
+
+  _log_yellow "Settings env values"
+  balena env add --fleet "$BALENA_FLEET" \
+    NATS_URL "$NATS_URL"
+  balena env add --fleet "$BALENA_FLEET" \
+    NATS_CREDS "./de-sandstorm-raspberry-car-user.creds"
+  balena env add --device "$BALENA_DEVICE_CAR_1" \
+    NATS_TOPIC "$NATS_TOPIC"
+
+  _log_green "Done"
+  deploy_show_environment
 }
 
-# Terminates the daemon on the car
-function down_car() {
-  _log_yellow "not yet implemented"
+# Shows the current configuration template in balena of Car 1
+function balena_show_environment() {
+  _log_yellow "Environment configuration of Car 1"
+  balena envs --device "$BALENA_DEVICE_CAR_1" --json | jq .
 }
 
-# Shuts down the Raspberry PI
-function shutdown_car() {
-  _log_yellow "not yet implemented"
+# Builds and pushes the local version
+function balena_release() {
+  _balena_pre_build
+  balena push "$BALENA_FLEET"
+  _balena_post_build
+}
+
+# Rebuilds the local version and deploys it to the fleet
+function balena_deploy() {
+  _balena_pre_build
+  balena deploy "$BALENA_FLEET" --build
+  _balena_post_build
+}
+
+# Deploys the app directly to the Raspberry PI without creating a release
+# This mode of local deployment hangs at the first INFO logs
+# for > 10min. Since this is already an outragous round-trip time
+# I stopped the deployment. However, I can connect via ssh.
+function _balena_deploy_lan__does_not_work_but_hangs() {
+  balena device local-mode "$BALENA_DEVICE_CAR_1" \
+    | ack "Local mode on device $BALENA_DEVICE_CAR_1 is ENABLED" > /dev/null 2>&1 \
+    || ( balena device local-mode "$BALENA_DEVICE_CAR_1" && exit 1 )
+  local IP=$(balena device "$BALENA_DEVICE_CAR_1" --json | jq -r '.ip_address')
+  _balena_pre_build
+  _log_yellow "Pushing update directly to $IP"
+  balena push "$IP"
+  _balena_post_build
+  _log_green "Done"
+}
+
+# Copies the local code into the target Raspberry cars running container via LAN via 'scp'.
+# Note that this does **NOT** require the loca-mode to be enabled.
+function balena_lan_deploy() {
+  local IP=$(balena device "$BALENA_DEVICE_CAR_1" --json | jq -r '.ip_address')
+  _log_yellow "Copying sources to $IP"
+  # Since the root FS is read-only we must copy the source directly into the target container.
+  local carContainer=$(ssh -p 22222 root@$IP \
+      balena-engine ps --format '{{.Names}}' | ack 'car_')
+  ( \
+    cd car && \
+    tar -c *.py raspberry/*.py \
+      | ssh -p 22222 root@$IP \
+          balena-engine cp - $carContainer:/app \
+  )
+  _log_green "Done"
+
+  _log_yellow "Restarting Container"
+  ssh -p 22222 root@$IP \
+      balena-engine restart $carContainer
+  _log_green "Done, boot might take a while, see 'dev balena_logs'"
+}
+
+function _balena_pre_build() {
+  cp tmp/de-sandstorm-raspberry-car-user.creds car/de-sandstorm-raspberry-car-user.creds
+}
+
+function _balena_post_build() {
+  rm car/de-sandstorm-raspberry-car-user.creds
+}
+
+# Opens a shell connection to the Raspberry PI
+function balena_enter() {
+  _log_green "You can mess around with 'balena-engine ps' and such."
+  _log_yellow "!!! touch your YubiKey !!!"
+  balena ssh "$BALENA_DEVICE_CAR_1"
+}
+
+# Shuts down the Raspbery PI "Car 1"
+function balena_shutdown() {
+  balena device shutdown "$BALENA_DEVICE_CAR_1"
+}
+
+# Shows the logs of the deployed services
+function balena_logs() {
+  balena logs "$BALENA_DEVICE_CAR_1" --tail
+}
+
+# Changes the WiFi settings on the connected SD card
+function balena_add_wifi() {
+  ls /Volumes/resin-boot/system-connections > /dev/null 2>&1 || ( _log_red "Please connect SD card, unable to locate /Volumes/resin-boot" && exit 1 )
+  local ssid=${1:-$(gum input --placeholder="SSID")}
+  local password=${2:-$(gum input --password --placeholder="password")}
+  # see https://docs.balena.io/reference/OS/network/#wifi-setup
+  local targetFile="/Volumes/resin-boot/system-connections/balena-$ssid-wifi"
+  cat <<EOF > "$targetFile"
+[connection]
+id=$ssid-wifi
+type=wifi
+
+[wifi]
+hidden=true
+mode=infrastructure
+ssid=$ssid
+autoconnect-priority=10
+
+[ipv4]
+method=auto
+
+[ipv6]
+addr-gen-mode=stable-privacy
+method=auto
+
+[wifi-security]
+auth-alg=open
+key-mgmt=wpa-psk
+psk=$password
+EOF
+  _log_green "Done, see $targetFile"
 }
 
 _log_green "---------------------------- RUNNING TASK: $1 ----------------------------"
