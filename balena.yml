@@ -1,0 +1,20 @@
+name: Raspberry-Car
+version: 0.1.0
+type: sw.application
+description: >
+  Remote controlled car with a camera attached.
+  The connection between the operator and the car is established via the network.
+data:
+  applicationConfigVariables:
+    # https://www.raspberrypi.com/documentation/computers/config_txt.html#start_file-fixup_file
+    # Set to "1" to enable the camera module.
+    - BALENA_HOST_CONFIG_start_x: 1
+    # GPU memory allocation in MB for 256MB board revision.
+    - BALENA_HOST_CONFIG_gpu_mem_256: 192
+    # GPU memory allocation in MB for 512MB board revision.
+    - BALENA_HOST_CONFIG_gpu_mem_512: 256
+    # GPU memory allocation in MB for 1024MB board revision.
+    - BALENA_HOST_CONFIG_gpu_mem_1024: 448
+  defaultDeviceType: raspberrypi3
+  supportedDeviceTypes:
+    - raspberrypi3

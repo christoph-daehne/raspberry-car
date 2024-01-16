@@ -2,6 +2,9 @@ import RPi.GPIO as GPIO
 
 def create_wheels():
     GPIO.setmode(GPIO.BOARD)
+    # disables the following warning:
+    # > This channel is already in use, continuing anyway.
+    GPIO.setwarnings(False)
     Left = Wheel(8, 10, 12)
     Right = Wheel(3, 5, 7)
     return [Left, Right]

@@ -31,7 +31,10 @@ class VideoStreamer:
         while True:
             now = time.time()
             if self.stopAtTime > round(time.time()):
-                await sendFrame(await self._camera.capture())
+                try:
+                    await sendFrame(await self._camera.capture())
+                except:
+                    print("Failed to send frame, continuing…")
                 sendingTime = time.time() - now
                 delay = minSendingTime - sendingTime
                 if delay > 0:

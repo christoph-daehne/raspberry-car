@@ -16,13 +16,15 @@ RUN apt-get update && \
     libatlas-base-dev \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
+# Enable the v4l2 driver for the Raspberry Pi camera
+RUN printf "bcm2835-v4l2\n" >> /etc/modules
+
 RUN pip3 install --upgrade pip
 # additional dependencies not needed by emulator
 RUN pip3 install \
   --index-url https://www.piwheels.org/simple \
   numpy==1.21.4 \
   opencv-python==4.7.0.72 \
-  picamera==1.13 \
   RPi.GPIO==0.7.1
 
 RUN mkdir -p /app/raspberry
@@ -40,4 +42,5 @@ COPY main.py .
 CMD ["python3","./main.py"]
 
 # Enable udevd so that plugged dynamic hardware devices show up in our container.
+# ie /dev/video0
 ENV UDEV=1

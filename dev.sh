@@ -277,6 +277,33 @@ EOF
   _log_green "Done, see $targetFile"
 }
 
+# Enables the Raspberry 3 camera modules and adjusts the GPU mem settings on the connected SD card
+function balena_enable_camera_module() {
+    local configPath="/Volumes/resin-boot/config.txt"
+    ls "$configPath" > /dev/null 2>&1 || ( _log_red "Please connect SD card, unable to locate $configPath" && exit 1 )
+    local configBlockMarker='## Raspberry Car configuration ##'
+    if cat "$configPath" | ack "$configBlockMarker" > /dev/null 2>&1; then
+      _log_green "$configPath already contains the Raspberry Car config block"
+    else
+      _log_yellow "Appending Raspberry Car config"
+      cat <<EOF >> "$configPath"
+
+#################################
+$configBlockMarker
+#################################
+# Set to "1" to enable the camera module.
+start_x=1
+# GPU memory allocation in MB for 256MB board revision.
+gpu_mem_256=192
+# GPU memory allocation in MB for 512MB board revision.
+gpu_mem_512=256
+# GPU memory allocation in MB for 1024MB board revision.
+gpu_mem_1024=448
+EOF
+      _log_green "Done"
+    fi
+}
+
 _log_green "---------------------------- RUNNING TASK: $1 ----------------------------"
 
 if [ ! -f "./profile.active.sh" ]; then

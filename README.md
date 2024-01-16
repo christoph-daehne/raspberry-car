@@ -19,6 +19,9 @@ This rewrite uses Nats.io for communication between car and operator since
     * [Bundling](https://docs.balena.io/learn/develop/dockerfile/)
     * [WiFi Setup](https://docs.balena.io/reference/OS/network/#wifi-setup)
     * [balena-engine](https://engine-docs.balena.io/getting-started)
+    * [Advanced boot settings](https://docs.balena.io/reference/OS/advanced/#raspberry-pi)
+    * [Raspberry PI boot settings](https://www.raspberrypi.com/documentation/computers/config_txt.html)
+    * [Balena Fleet Configuration](https://dashboard.balena-cloud.com/fleets/2104400/config)
 * [Dev-Script-Runner](https://github.com/sandstorm/dev-script-runner) for custom dev-tools
     * [Bitwarden CLI](https://bitwarden.com/help/cli/)
     * [jq](https://jqlang.github.io/jq/)
