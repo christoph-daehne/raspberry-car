@@ -2,9 +2,8 @@ import { invoke } from '@tauri-apps/api'
 import { emit, listen } from '@tauri-apps/api/event'
 import { Direction } from './Direction';
 
-type PublishableTopics = "commands";
-export async function nats_publish(topic: PublishableTopics, direction: Direction) {
-    await emit(`nats_publish__${topic}`, direction);
+export async function nats_publish_commands(direction: Direction) {
+    await emit(`nats_publish__commands`, direction);
 }
 
 export async function console_log(...data: any[]) {

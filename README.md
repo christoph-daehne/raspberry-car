@@ -1,6 +1,7 @@
 # Raspberry Car
 
-A remote controlled car with a camera attached.
+A remote controlled car with a camera attached. Communication between opeator and car happens over the internet.
+
 This rewrite uses Nats.io for communication between car and operator since
 * our Nats.io infrastructure is in place
 * it comes with authentication
@@ -8,8 +9,9 @@ This rewrite uses Nats.io for communication between car and operator since
 ## Tech Stack
 
 * [Nats.io](https://nats.io/) for communication between car and client
+    * [Python client: nats-py](https://github.com/nats-io/nats.py)
+    * [Rust client: nats](https://docs.rs/nats/latest/nats/)
 * [Python](https://projects.raspberrypi.org/en/collections/python) on the car
-    * [Python picamera](https://picamera.readthedocs.io/en/release-1.13/)
     * [Python Asyncio](https://realpython.com/async-io-python/)
 * [balenaCloud](https://docs.balena.io/learn/getting-started/raspberrypi3/python/) for deployment to the car
     * [Raspberry-Car fleet](https://dashboard.balena-cloud.com/fleets/2104400)
@@ -36,9 +38,6 @@ This rewrite uses Nats.io for communication between car and operator since
 
 ## Development Setup
 
-### Recommended IDE Setup
-
-* [VS Code](https://code.visualstudio.com/) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode)
 * run `dev setup`
 
 ## Quick Start
@@ -56,6 +55,7 @@ You can work with the actual car or an emulated one.
 # local start
 dev up_operator_app
 dev up_car_emulator
+dev fake_second_operator
 …
 dev down
 
@@ -67,8 +67,9 @@ dev profile_prod_activate            # Activates the production configuration us
 # more commands
 dev help
 
-# enter Car 1
-balena ssh 46231ba
+# enter Car
+dev balena_enter # through cloud
+ssh -p 22222 root@<ip> # through LAN
 ```
 
 ## Technical background

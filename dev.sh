@@ -131,7 +131,7 @@ function fake_second_operator() {
     sleep 0.8
     nats publish "$NATS_TOPIC.commands" "None"
     sleep 0.8
-    nats publish "$NATS_TOPIC.commands" "Foreward"
+    nats publish "$NATS_TOPIC.commands" "Forward"
     sleep 0.8
     nats publish "$NATS_TOPIC.commands" "Back"
     sleep 0.8
@@ -198,7 +198,7 @@ function _balena_deploy_lan__does_not_work_but_hangs() {
 }
 
 # Copies the local code into the target Raspberry cars running container via LAN via 'scp'.
-# Note that this does **NOT** require the loca-mode to be enabled.
+# Note that this does **NOT** require the local-mode to be enabled.
 function balena_lan_deploy() {
   local IP=$(balena device "$BALENA_DEVICE_CAR_1" --json | jq -r '.ip_address')
   _log_yellow "Copying sources to $IP"
@@ -275,33 +275,6 @@ key-mgmt=wpa-psk
 psk=$password
 EOF
   _log_green "Done, see $targetFile"
-}
-
-# Enables the Raspberry 3 camera modules and adjusts the GPU mem settings on the connected SD card
-function balena_enable_camera_module() {
-    local configPath="/Volumes/resin-boot/config.txt"
-    ls "$configPath" > /dev/null 2>&1 || ( _log_red "Please connect SD card, unable to locate $configPath" && exit 1 )
-    local configBlockMarker='## Raspberry Car configuration ##'
-    if cat "$configPath" | ack "$configBlockMarker" > /dev/null 2>&1; then
-      _log_green "$configPath already contains the Raspberry Car config block"
-    else
-      _log_yellow "Appending Raspberry Car config"
-      cat <<EOF >> "$configPath"
-
-#################################
-$configBlockMarker
-#################################
-# Set to "1" to enable the camera module.
-start_x=1
-# GPU memory allocation in MB for 256MB board revision.
-gpu_mem_256=192
-# GPU memory allocation in MB for 512MB board revision.
-gpu_mem_512=256
-# GPU memory allocation in MB for 1024MB board revision.
-gpu_mem_1024=448
-EOF
-      _log_green "Done"
-    fi
 }
 
 _log_green "---------------------------- RUNNING TASK: $1 ----------------------------"

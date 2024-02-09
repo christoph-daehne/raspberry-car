@@ -36,7 +36,7 @@
       {
         "fullscreen": false,
         "resizable": true,
-        "title": "raspberry-car-operator-app",
+        "title": "Raspberry Car Operator",
         "width": 800,
         "height": 600
       }

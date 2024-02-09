@@ -61,7 +61,7 @@ async def mainProcessCommands(nc, topic: str, videoStreamer: VideoStreamer):
         command = message.data.decode()
         speedLeft = 0
         speedRight = 0
-        if command == "Foreward":
+        if command == "Forward":
             speedLeft = 3
             speedRight = 3
         elif command == "Back":
@@ -75,15 +75,15 @@ async def mainProcessCommands(nc, topic: str, videoStreamer: VideoStreamer):
             speedRight = -1
         await setSpeed(speedLeft, speedRight)
     commands = await nc.subscribe(topic)
-    lastCommand = round(time.time())
+    timeOfLastCommand = round(time.time())
     while True:
         async for message in commands.messages:
             await drive(message)
-            lastCommand = round(time.time())
+            timeOfLastCommand = round(time.time())
         # stop after a few seconds without command
-        if lastCommand + 2 < round(time.time()):
+        if timeOfLastCommand + 2 < round(time.time()):
             await setSpeed(0, 0)
-            lastCommand = round(time.time())
+            timeOfLastCommand = round(time.time())
         await asyncio.sleep(1)
 
 async def main():

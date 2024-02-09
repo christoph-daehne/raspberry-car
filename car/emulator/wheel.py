@@ -12,7 +12,7 @@ def close_wheels():
 
 class Wheel:
     """
-        dummy wheel(s) just logging stiff
+        dummy wheel(s) just logging stuff
     """
 
     def __init__(self, name: str):

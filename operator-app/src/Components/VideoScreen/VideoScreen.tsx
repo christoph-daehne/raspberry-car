@@ -33,8 +33,7 @@ function VideoScreen() {
         width={320}
         height={256}
         ref={image}
-        src=""
-        alt="The video feed starts automatically when the car receives commands." />
+        src="" />
       <p>The video feed starts automatically when the car receives commands.</p>
     </div>
   );

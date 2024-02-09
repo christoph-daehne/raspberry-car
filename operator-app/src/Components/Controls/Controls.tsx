@@ -13,10 +13,10 @@ function Controls({
       <div class="row">
         <button
           onMouseUp={() => onChange(Direction.None)}
-          onMouseDown={() => onChange(Direction.Foreward)}
-          classList={{ active: activeDirection() === Direction.Foreward }}
+          onMouseDown={() => onChange(Direction.Forward)}
+          classList={{ active: activeDirection() === Direction.Forward }}
         >
-          Foreward
+          Forward
         </button>
       </div>
       <div class="row my">

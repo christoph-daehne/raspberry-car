@@ -1,6 +1,6 @@
 export enum Direction {
   None = "None",
-  Foreward = "Foreward",
+  Forward = "Forward",
   Left = "Left",
   Right = "Right",
   Back = "Back"

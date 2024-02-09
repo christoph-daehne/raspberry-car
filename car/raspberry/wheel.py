@@ -20,10 +20,10 @@ class Wheel:
         wheel(s) on one side of the car
     """
 
-    def __init__(self, enPin: int, inForewardPin: int, inBackwardPin: int):
-        GPIO.setup(inForewardPin, GPIO.OUT)
-        self.inForewardPin = inForewardPin
-        GPIO.output(inForewardPin, False)
+    def __init__(self, enPin: int, inForwardPin: int, inBackwardPin: int):
+        GPIO.setup(inForwardPin, GPIO.OUT)
+        self.inForwardPin = inForwardPin
+        GPIO.output(inForwardPin, False)
 
         self.inBackwardPin = inBackwardPin
         GPIO.setup(inBackwardPin, GPIO.OUT)
@@ -39,12 +39,12 @@ class Wheel:
             speed might be -3, -2, -1, 0, 1, 2, 3
         """
         force = min(3, abs(speed))
-        isForewards = speed > 0
-        if (isForewards):
+        isForwards = speed > 0
+        if (isForwards):
             GPIO.output(self.inBackwardPin, False)
-            GPIO.output(self.inForewardPin, True)
+            GPIO.output(self.inForwardPin, True)
         else:
-            GPIO.output(self.inForewardPin, False)
+            GPIO.output(self.inForwardPin, False)
             GPIO.output(self.inBackwardPin, force > 0)
         if force > 0:
             self.pwm.ChangeDutyCycle(70 + (10 * force))
