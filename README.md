@@ -2,6 +2,11 @@
 
 A remote controlled car with a camera attached. Communication between opeator and car happens over the internet.
 
+You might want to read the blog posts about this project. Start with: [DIY World wide remote access to the Raspberry Car (Part 8)](https://sandstorm.de/de/blog/post/diy-world-wide-remote-access-to-the-raspberry-car-part-8.html).
+
+
+![Raspberry Car Promo picture (AI generated)](./docs/raspberry-car-promo-picture.jpg)
+
 This rewrite uses Nats.io for communication between car and operator since
 * our Nats.io infrastructure is in place
 * it comes with authentication
@@ -79,3 +84,5 @@ The operator and car communicate voa Nats.io:
 * topic: _de.sandstorm.raspberry.car.ID_ with _ID_ being the ID of the car
 
 The operator sends commands to the car and the car sends its camera feed back.
+
+![schematic showing the data flow between services](./docs/Raspberry-Car-Services.drawio.png)
